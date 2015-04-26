@@ -1,0 +1,86 @@
+---
+title: "Practical Machine Learning-Project"
+author: "Ching-Yen Shih"
+date: "Sunday, April 26, 2015"
+output: html_document
+---
+```{r,echo=FALSE,results='hide', message=FALSE, warning=FALSE}
+library(caret)
+library(rattle)
+library(rpart.plot)
+set.seed(5432)
+```
+## Intorduction
+
+  This project uses Weight Lifting Exercises Dataset[1] to investigate "how (well)" an activity was performed by the wearer with the set of on-body sensors.
+  Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).[1]
+  The goal of this project is using data from the set of on-body sensors to predict the manner(Class A ~ class E) which the wearer did the exercise.
+    
+## Variables Selection
+Overview of the raw training dataset and testing dataset
+```{r}
+training_1 <- read.csv(file = "pml-training.csv")
+testing_1 <- read.csv(file = "pml-testing.csv")
+dim(training_1);dim(testing_1)
+```
+  By taking a look at the data, I found there are a lot of columns with NA values or missing values. They are not useful for maching learning. Therefore, I discarded them first.
+  
+```{r}
+df_1 <- training_1[ , ! apply( training_1 , 2 , function(x) any(is.na(x)) ) ]
+df_2 <- testing_1[ , ! apply( testing_1 , 2 , function(x) any(is.na(x)) ) ]
+dim(df_1);dim(df_2)
+```
+
+  It shows that the number of the variables remained in testing dataset is fewer than the training dataset.  It's no point to use the variables not existing in testing dataset as predictors. So I kept the variables existing in both datasets. 
+
+```{r}
+df_3 <- df_1[,which(names(df_1) %in% names(df_2))]
+dim(df_3)
+```
+
+  Then I excluded the first seven columns which are just performer names, time records and the window numbers, they are not the values from the sensors. And I added the outcome variable "classe" into this trimmed training dataset.
+```{r}
+df_4 <- df_3[,-c(1:7)]
+training <- data.frame(df_4,classe = training_1$classe) ; testing <- df_2
+dim(training);dim(testing)
+```
+
+
+## Algorithm Selection
+  I applied two algoithms, Classification tress and Random forest, to the training data. And picked the one with the better result by their out of sample error.
+  
+### Classification Tree
+
+  Specify the way of resampling (Cross validation, n = 10)
+```{r}
+ctrl <- trainControl(method = "cv",number = 10 )
+```
+  Apply rpart2 in Caret to the training data.
+```{r}
+Fit_tree <- train(classe~.,method = 'rpart2',trControl = ctrl,data =training)
+print(Fit_tree)
+```
+```{r,echo=FALSE}
+fancyRpartPlot(Fit_tree$finalModel)
+```
+
+It ended up with 55.6% accuracy.
+
+### Random Forest
+  In random forest, there is no need to to Cross-validation to get an unbiased estimate of the test set error.It's estimated internally. (Refer to http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm#ooberr)
+  Caret functions uses bootstrapping by default which will take a lot of computing time and it's not necessarily needed. So I turned it off.
+  
+```{r,message=FALSE, warning=FALSE}
+fitControl <- trainControl(method = "none")
+tgrid <- expand.grid(mtry=c(6)) 
+Fit_rf <- train(classe~.,method = 'rf', trControl = fitControl, tuneGrid=tgrid,data=training)
+print(Fit_rf$finalModel)
+```
+  With by default 500 trees, it produced 0.27% OOB estimate of error rate which is pretty good result and considerably better than classification tree. So I chose Random forest as the model algorithm.
+```{r,echo=FALSE}
+
+```
+## Reference
+
+[1]Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human '13) . Stuttgart, Germany: ACM SIGCHI, 2013.
+
