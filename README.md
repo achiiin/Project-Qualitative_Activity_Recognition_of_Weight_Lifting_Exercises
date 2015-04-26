@@ -1,3 +1,3 @@
 # Project_Weight-Lifting-Exercises-Dataset
 
-View the html file with this link: http://achiiin.github.io/Project_PML/PML_project.html
+View the HTML page on the web with this link: http://achiiin.github.io/Project_Weight-Lifting-Exercises-Dataset/PML_project.html
