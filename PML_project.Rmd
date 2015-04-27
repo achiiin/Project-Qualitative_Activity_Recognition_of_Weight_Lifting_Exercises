@@ -76,10 +76,30 @@ tgrid <- expand.grid(mtry=c(6))
 Fit_rf <- train(classe~.,method = 'rf', trControl = fitControl, tuneGrid=tgrid,data=training)
 print(Fit_rf$finalModel)
 ```
-  With by default 500 trees, it produced 0.27% OOB estimate of error rate which is pretty good result and considerably better than classification tree. So I chose Random forest as the model algorithm.
-```{r,echo=FALSE}
 
+  With by default 500 trees, it produced 0.27% OOB estimate of error rate which is pretty good result and considerably better than classification tree. So I chose Random forest as the model algorithm.
+  
+## Conclusion
+
+```{r,echo=FALSE,results='hide'}
+answer_Correct <- as.factor(c("B","A","B","A","A","E","D","B","A","A",
+                              "B","C","B","A","E","E","A","B","B","B"))
 ```
+Apply Random forest model algorithm to testing dataset.
+
+```{r}
+answer_predict <- predict(Fit_rf,newdata = testing)
+```
+
+Compare the result to the correct answer with a Confusion Matrix.
+
+```{r}
+print(confusionMatrix(answer_Correct,answer_predict)$table)
+```
+
+Get the 100% accuracy! Successfully pass the test!
+
+
 ## Reference
 
 [1]Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human '13) . Stuttgart, Germany: ACM SIGCHI, 2013.
